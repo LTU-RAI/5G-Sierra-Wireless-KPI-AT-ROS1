@@ -1,6 +1,6 @@
 # 5G Sierra Wireless KPI AT ROS1
 
- Author: [Emanuele Pagliari](https://github.com/Palia95) 
+ Author: [Emanuele Pagliari](https://github.com/Palia95)
 
  This ROS1 package gathers the main 5G RF quality indexes from Sierra Wireless 5G modems (`EM9293` and `EM9191`) and publish them in the proper ROS1 topic (`sierra_nr5g`).
 
@@ -31,4 +31,5 @@ To check if the driver has been properly loaded, use the following command:
 lsusb -t
 ```
 Should return the following output:
+
 ![Driver](img/driver.jpg)
