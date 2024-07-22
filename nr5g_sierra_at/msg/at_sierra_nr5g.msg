@@ -9,9 +9,9 @@ float64 sinr
 string band
 int16 bw_dl
 int16 bw_ul
-int16 cell_id
-int16 gNB
-int16 sector_ID
+int64 cell_id
+int64 gNB
+int32 sector_ID
 int16 mimo_dl
 int16 mimo_ul
 float64 tx_power

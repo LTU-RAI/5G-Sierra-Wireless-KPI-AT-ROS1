@@ -9,7 +9,7 @@ from std_msgs.msg import Int16
 from nr5g_sierra_at.msg import at_sierra_nr5g
 
 # Read interval
-refresh = 0.2
+refresh = 0.25
 
 gNodeB_ID_Length = 28
 
@@ -29,7 +29,7 @@ def parse_nr5g():
 
     while True:
         line = ser.readline().replace(b'\r\n', b'').decode('utf-8')
-        # print(f"DEBUG: {line}")  # Debug print to trace each line
+        print(f"DEBUG: {line}")  # Debug print to trace each line
 
         if line:
             if 'NR5G Cell ID' in line:
@@ -106,6 +106,13 @@ def parse_nr5g():
     #     }
     #}
 
+def safe_float_conversion(value):
+    return float(value) if value not in [None, '---'] else float('nan')
+
+
+def safe_int_conversion(value):
+    return int(value) if value not in [None, '---'] else 0
+
 def scan():
     nr5g_data = parse_nr5g()
     return {"nr5g": nr5g_data}
@@ -121,22 +128,22 @@ def publish_5g_status():
         msg = at_sierra_nr5g()
         msg.header.stamp = rospy.Time.now()
         msg.net_type = nr5g_params["net_type"]
-        msg.rsrp = float(nr5g_params["rsrp"]) if nr5g_params["rsrp"] is not None else float('nan')
-        msg.rsrq = float(nr5g_params["rsrq"]) if nr5g_params["rsrq"] is not None else float('nan')
-        msg.sinr = float(nr5g_params["sinr"]) if nr5g_params["sinr"] is not None else float('nan')
+        msg.rsrp = safe_float_conversion(nr5g_params["rsrp"])
+        msg.rsrq = safe_float_conversion(nr5g_params["rsrq"])
+        msg.sinr = safe_float_conversion(nr5g_params["sinr"])
         msg.band = nr5g_params["band"]
-        msg.bw_dl = nr5g_params["bandwidth_dl"]
-        msg.bw_ul = nr5g_params["bandwidth_ul"]
-        msg.cell_id = nr5g_params["cell_id"]
-        msg.gNB = nr5g_params["gNB"]
-        msg.sector_ID = nr5g_params["sector_ID"]
-        msg.mimo_dl = int(nr5g_params["mimo_dl"]) if nr5g_params["mimo_dl"] is not None else 0
-        msg.mimo_ul = int(nr5g_params["mimo_ul"]) if nr5g_params["mimo_ul"] is not None else 0
-        msg.tx_power = float(nr5g_params["tx_power"]) if nr5g_params["tx_power"] is not None else float('nan')
-        msg.rssi_0 = float(nr5g_params["rssi_0"]) if nr5g_params["rssi_0"] is not None else float('nan')
-        msg.rssi_1 = float(nr5g_params["rssi_1"]) if nr5g_params["rssi_1"] is not None else float('nan')
-        msg.rssi_2 = float(nr5g_params["rssi_2"]) if nr5g_params["rssi_2"] is not None else float('nan')
-        msg.rssi_3 = float(nr5g_params["rssi_3"]) if nr5g_params["rssi_3"] is not None else float('nan')
+        msg.bw_dl = safe_int_conversion(nr5g_params["bandwidth_dl"])
+        msg.bw_ul = safe_int_conversion(nr5g_params["bandwidth_ul"])
+        msg.cell_id = safe_int_conversion(nr5g_params["cell_id"])
+        msg.gNB = safe_int_conversion(nr5g_params["gNB"])
+        msg.sector_ID = safe_int_conversion(nr5g_params["sector_ID"])
+        msg.mimo_dl = safe_int_conversion(nr5g_params["mimo_dl"])
+        msg.mimo_ul = safe_int_conversion(nr5g_params["mimo_ul"])
+        msg.tx_power = safe_float_conversion(nr5g_params["tx_power"])
+        msg.rssi_0 = safe_float_conversion(nr5g_params["rssi_0"])
+        msg.rssi_1 = safe_float_conversion(nr5g_params["rssi_1"])
+        msg.rssi_2 = safe_float_conversion(nr5g_params["rssi_2"])
+        msg.rssi_3 = safe_float_conversion(nr5g_params["rssi_3"])
 
         pub.publish(msg)
         rate.sleep()
