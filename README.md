@@ -16,11 +16,11 @@ sudo modprobe option
 ```
  Then, based on the adopted modem, the following command is needed to properly load the Option driver for the Sierra Wireless `EM9293`:
 ```bash
-sudo apt upgrade modemmanager sudo sh -c "echo '1199 90e3' > /sys/bus/usb-serial/drivers/option1/new_id"
+sudo sh -c "echo '1199 90e3' > /sys/bus/usb-serial/drivers/option1/new_id"
 ```
 For the Sierra Wireless `EM9191` instead, the same commands needs the suitable VendorID and ProductID:
 ```bash
-sudo apt upgrade modemmanager sudo sh -c "echo '1199 90d3' > /sys/bus/usb-serial/drivers/option1/new_id"
+sudo sh -c "echo '1199 90d3' > /sys/bus/usb-serial/drivers/option1/new_id"
 ```
 Other modems might need different VID and PID. If the command is successful, the following command should return the `ttyUSB0` and `ttyUSB1` serial ports as available:
 ```bash
