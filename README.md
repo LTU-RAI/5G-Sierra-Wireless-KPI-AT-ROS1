@@ -33,3 +33,11 @@ lsusb -t
 Should return the following output:
 
 ![Driver](img/driver.jpg)
+
+## Output example
+
+![NR5G](img/output.jpg)
+
+## To do
+
+Modify the parser and the publisher to include the nearby cells data.
