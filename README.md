@@ -36,7 +36,7 @@ Should return the following output:
 
 ## Output example
 
-![NR5G](img/output.jpg)
+![NR5G](img/output.png)
 
 ## To do
 
