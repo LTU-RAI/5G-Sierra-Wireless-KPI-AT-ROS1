@@ -6,11 +6,11 @@
 
 ## Requirements
 
- The only requirements are Python3 with its related ROS1 dependencies and `pySerial` installed. Also, a Sierra Wireless 5G modem properly connected to the host computer is needed.
+ The only requirements are Python3 with its related ROS1 dependencies and `pySerial` installed. Also, a Sierra Wireless 5G modem properly connected to the host computer is needed with a good quality USB-C 3.0 cable.
 
 ## Forcing Sierra Wireless driver loading
 
- On `Ubuntu 20.04 LTS`, it is necessary to force the loading of the `Option` driver using the following commands:
+ On `Ubuntu 20.04 and 22.04 LTS`, it is necessary to force the loading of the `Option` driver using the following commands:
 ```bash
 sudo modprobe option
 ```
@@ -33,6 +33,8 @@ lsusb -t
 Should return the following output:
 
 ![Driver](img/driver.jpg)
+
+A bash script, denoted as `5Gdriverload.sh` is also available to make the process faster. Please use the proper VID and PID based on the modem you are using.
 
 ## Output example
 

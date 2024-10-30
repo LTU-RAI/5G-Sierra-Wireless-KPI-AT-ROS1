@@ -20,46 +20,73 @@ ser.port = '/dev/ttyUSB0'
 ser.open()
 
 def parse_nr5g():
-    # Initialize variables
+    # Initialize variables with default values
     nr5g_rssi = [None] * 4
-    nr5g_rsrp, nr5g_rsrq, nr5g_sinr, nr5g_band, nr5g_bw_dl, nr5g_bw_ul, nr5g_cell_id = [None] * 7
+    nr5g_rsrp, nr5g_rsrq, nr5g_sinr, nr5g_band, nr5g_bw_dl, nr5g_bw_ul, nr5g_cell_id, gNodeB_ID, sector_ID = [None] * 9
     nr5g_mimo_dl, nr5g_mimo_ul, nr5g_tx_power = [None] * 3
 
+    # Send command to the device
     ser.write(b'AT!GSTATUS?\r\n')
 
     while True:
         line = ser.readline().replace(b'\r\n', b'').decode('utf-8')
-        print(f"DEBUG: {line}")  # Debug print to trace each line
-
+        #print(f"DEBUG: {line}")  # Debug print to trace each line
+        
+        # Only process non-empty lines
         if line:
-            if 'NR5G Cell ID' in line:
-                nr5g_cell_id = line.split(':')[2].strip().split()[1].replace(')','').replace('(','')
-                gNodeB_ID = int(nr5g_cell_id)//(2 ** (36 - gNodeB_ID_Length))
-                sector_ID = int(nr5g_cell_id) - (gNodeB_ID * (2 ** (36 - gNodeB_ID_Length)))
-            elif 'NR5G band' in line:
-                nr5g_band = line.split(':')[1].strip().split()[0]
-            elif 'NR5G dl bw' in line:
-                parts = line.split()
-                nr5g_bw_dl = parts[3]
-                nr5g_bw_ul = parts[8]
-            elif 'NR5G(sub6) Rx' in line:
-                # Use regex to find all RSSI values in the line
-                rssi_matches = re.findall(r'NR5G\(sub6\) Rx(\d) RSSI \(dBm\):\s*(-?\d+\.\d+)', line)
-                for match in rssi_matches:
-                    index = int(match[0])
-                    nr5g_rssi[index] = float(match[1])
-            elif 'NR5G RSRP' in line:
-                nr5g_rsrp = line.split(':')[1].strip().split()[0]
-                nr5g_rsrq = line.split(':')[2].strip().split()[0]
-            elif 'NR5G SINR' in line:
-                nr5g_sinr = line.split(':')[1].strip().split()[0]
-            elif 'NR5G dl MIMO' in line:
-                nr5g_mimo_dl = line.split(':')[1].strip().split()[0]
-                nr5g_mimo_ul = line.split(':')[2].strip().split()[0]
-            elif 'NR5G Tx Power' in line:
-                nr5g_tx_power = line.split(':')[1].strip().split()[0]
-            elif line.startswith('OK'):
-                break
+            try:
+                # Parse NR5G Cell ID
+                if 'NR5G Cell ID' in line:
+                    try:
+                        nr5g_cell_id = line.split(':')[2].strip().split()[1].replace(')','').replace('(','')
+                        gNodeB_ID = int(nr5g_cell_id)//(2 ** (36 - gNodeB_ID_Length))
+                        sector_ID = int(nr5g_cell_id) - (gNodeB_ID * (2 ** (36 - gNodeB_ID_Length)))
+                    except (IndexError, ValueError) as e:
+                        print(f"Parsing Error in 'NR5G Cell ID': {e}")
+
+                # Parse NR5G Band
+                elif 'NR5G band' in line:
+                    try:
+                        nr5g_band = line.split(':')[1].strip().split()[0]
+                    except IndexError as e:
+                        print(f"Parsing Error in 'NR5G band': {e}")
+
+                # Parse NR5G Download and Upload Bandwidth
+                elif 'NR5G dl bw' in line:
+                    try:
+                        parts = line.split()
+                        nr5g_bw_dl = parts[3]
+                        nr5g_bw_ul = parts[8]
+                    except IndexError as e:
+                        print(f"Parsing Error in 'NR5G dl bw': {e}")
+
+                # Parse RSSI values
+                elif 'NR5G(sub6) Rx' in line:
+                    try:
+                        # Use regex to find all RSSI values in the line
+                        rssi_matches = re.findall(r'NR5G\(sub6\) Rx(\d) RSSI \(dBm\):\s*(-?\d+\.\d+)', line)
+                        for match in rssi_matches:
+                            index = int(match[0])
+                            nr5g_rssi[index] = float(match[1])
+                    except ValueError as e:
+                        print(f"Parsing Error in 'NR5G(sub6) Rx': {e}")
+
+                elif 'NR5G RSRP' in line:
+                    nr5g_rsrp = line.split(':')[1].strip().split()[0]
+                    nr5g_rsrq = line.split(':')[2].strip().split()[0]
+                elif 'NR5G SINR' in line:
+                    nr5g_sinr = line.split(':')[1].strip().split()[0]
+                elif 'NR5G dl MIMO' in line:
+                    nr5g_mimo_dl = line.split(':')[1].strip().split()[0]
+                    nr5g_mimo_ul = line.split(':')[2].strip().split()[0]
+                elif 'NR5G Tx Power' in line:
+                    nr5g_tx_power = line.split(':')[1].strip().split()[0]
+                elif line.startswith('OK'):
+                    break
+
+            except Exception as e:
+                # General exception catch for any unexpected error in parsing
+                print(f"Unexpected error: {e}")
 
     return {
         "timestamp": str(datetime.now()),
