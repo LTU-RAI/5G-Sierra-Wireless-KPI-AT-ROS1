@@ -10,8 +10,8 @@ string band
 int16 bw_dl
 int16 bw_ul
 int64 cell_id
-int64 gNB
-int32 sector_ID
+int64 gnb
+int32 sector_id
 int16 mimo_dl
 int16 mimo_ul
 float64 tx_power

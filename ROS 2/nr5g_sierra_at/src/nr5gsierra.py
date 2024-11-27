@@ -1,12 +1,12 @@
+#!/usr/bin/env python3
 import rclpy
 from rclpy.node import Node
 from datetime import datetime
 import serial
 import re
-from nr5g_sierra_at.msg import AtSierraNr5g  # Custom message
+from nr5g_sierra_at.msg import ATSierraNR5G  # Custom message
 from std_msgs.msg import String
 
-gNodeB_ID_Length = 28
 
 class NR5GSierraPublisher(Node):
     def __init__(self):
@@ -20,23 +20,24 @@ class NR5GSierraPublisher(Node):
         )
 
         # Publisher setup
-        self.publisher_ = self.create_publisher(AtSierraNr5g, 'sierra_nr5g', 10)
+        self.publisher_ = self.create_publisher(ATSierraNR5G, 'sierra_nr5g', 10)
 
         # Timer to call the publish method at the desired interval
-        self.refresh = 0.25
+        self.refresh = 0.2 # 200 ms between each msg
         self.timer = self.create_timer(self.refresh, self.publish_status)
 
         self.get_logger().info('Node has been initialized')
 
     def publish_status(self):
         measurements = self.parse_nr5g()
+        print(measurements)
 
         if not measurements:
             self.get_logger().warning('Failed to parse measurements.')
             return
 
         nr5g_params = measurements["net_param"]
-        msg = AtSierraNr5g()
+        msg = ATSierraNR5G()
 
         # Assign values to the custom message
         msg.header.stamp = self.get_clock().now().to_msg()
@@ -44,12 +45,12 @@ class NR5GSierraPublisher(Node):
         msg.rsrp = self.safe_float_conversion(nr5g_params.get("rsrp"))
         msg.rsrq = self.safe_float_conversion(nr5g_params.get("rsrq"))
         msg.sinr = self.safe_float_conversion(nr5g_params.get("sinr"))
-        msg.band = nr5g_params.get("band", "N/A")
+        msg.band = str(nr5g_params.get("band", "N/A"))
         msg.bw_dl = self.safe_int_conversion(nr5g_params.get("bandwidth_dl"))
         msg.bw_ul = self.safe_int_conversion(nr5g_params.get("bandwidth_ul"))
         msg.cell_id = self.safe_int_conversion(nr5g_params.get("cell_id"))
-        msg.gNB = self.safe_int_conversion(nr5g_params.get("gNB"))
-        msg.sector_ID = self.safe_int_conversion(nr5g_params.get("sector_ID"))
+        msg.gnb = self.safe_int_conversion(nr5g_params.get("gNB"))
+        msg.sector_id = self.safe_int_conversion(nr5g_params.get("sector_ID"))
         msg.mimo_dl = self.safe_int_conversion(nr5g_params.get("mimo_dl"))
         msg.mimo_ul = self.safe_int_conversion(nr5g_params.get("mimo_ul"))
         msg.tx_power = self.safe_float_conversion(nr5g_params.get("tx_power"))
@@ -67,6 +68,7 @@ class NR5GSierraPublisher(Node):
         nr5g_rssi = [None] * 4
         nr5g_rsrp, nr5g_rsrq, nr5g_sinr, nr5g_band, nr5g_bw_dl, nr5g_bw_ul, nr5g_cell_id, gNodeB_ID, sector_ID = [None] * 9
         nr5g_mimo_dl, nr5g_mimo_ul, nr5g_tx_power = [None] * 3
+        gNodeB_ID_Length = 28
 
         # Send command to the device
         self.ser.write(b'AT!GSTATUS?\r\n')
@@ -76,6 +78,7 @@ class NR5GSierraPublisher(Node):
 
             # Only process non-empty lines
             if line:
+                # print(f"{line}")
                 try:
                     # Parse NR5G Cell ID
                     if 'NR5G Cell ID' in line:
@@ -83,6 +86,7 @@ class NR5GSierraPublisher(Node):
                             nr5g_cell_id = line.split(':')[2].strip().split()[1].replace(')','').replace('(','')
                             gNodeB_ID = int(nr5g_cell_id)//(2 ** (36 - gNodeB_ID_Length))
                             sector_ID = int(nr5g_cell_id) - (gNodeB_ID * (2 ** (36 - gNodeB_ID_Length)))
+                            # print(nr5g_cell_id, gNodeB_ID, sector_ID)
                         except (IndexError, ValueError) as e:
                             print(f"Parsing Error in 'NR5G Cell ID': {e}")
 
@@ -90,6 +94,7 @@ class NR5GSierraPublisher(Node):
                     elif 'NR5G band' in line:
                         try:
                             nr5g_band = line.split(':')[1].strip().split()[0]
+                            # print(nr5g_band)
                         except IndexError as e:
                             print(f"Parsing Error in 'NR5G band': {e}")
 
@@ -99,6 +104,7 @@ class NR5GSierraPublisher(Node):
                             parts = line.split()
                             nr5g_bw_dl = parts[3]
                             nr5g_bw_ul = parts[8]
+                            # print(nr5g_bw_dl, nr5g_bw_ul)
                         except IndexError as e:
                             print(f"Parsing Error in 'NR5G dl bw': {e}")
 
@@ -110,19 +116,24 @@ class NR5GSierraPublisher(Node):
                             for match in rssi_matches:
                                 index = int(match[0])
                                 nr5g_rssi[index] = float(match[1])
+                                # print(nr5g_rssi[index])
                         except ValueError as e:
                             print(f"Parsing Error in 'NR5G(sub6) Rx': {e}")
 
                     elif 'NR5G RSRP' in line:
                         nr5g_rsrp = line.split(':')[1].strip().split()[0]
                         nr5g_rsrq = line.split(':')[2].strip().split()[0]
+                        # print(nr5g_rsrp, nr5g_rsrq)
                     elif 'NR5G SINR' in line:
                         nr5g_sinr = line.split(':')[1].strip().split()[0]
+                        # print(nr5g_sinr)
                     elif 'NR5G dl MIMO' in line:
                         nr5g_mimo_dl = line.split(':')[1].strip().split()[0]
                         nr5g_mimo_ul = line.split(':')[2].strip().split()[0]
+                        # print(nr5g_mimo_dl, nr5g_mimo_ul)
                     elif 'NR5G Tx Power' in line:
                         nr5g_tx_power = line.split(':')[1].strip().split()[0]
+                        # print(nr5g_tx_power)
                     elif line.startswith('OK'):
                         break
                 
@@ -130,29 +141,29 @@ class NR5GSierraPublisher(Node):
                     # General exception catch for any unexpected error in parsing
                     print(f"Unexpected error: {e}")
 
-            # Return the parsed dictionary
-            return {
-                "timestamp": str(datetime.now()),
-                "net_param": {
-                    "net_type": "5G",
-                    "rsrp": nr5g_rsrp,
-                    "rsrq": nr5g_rsrq,
-                    "sinr": nr5g_sinr,
-                    "band": nr5g_band,
-                    "bandwidth_dl": nr5g_bw_dl,
-                    "bandwidth_ul": nr5g_bw_ul,
-                    "rssi_0": nr5g_rssi[0],
-                    "rssi_1": nr5g_rssi[1],
-                    "rssi_2": nr5g_rssi[2],
-                    "rssi_3": nr5g_rssi[3],
-                    "cell_id": nr5g_cell_id,
-                    "gNB": gNodeB_ID,
-                    "sector_ID": sector_ID,
-                    "mimo_dl": nr5g_mimo_dl,
-                    "mimo_ul": nr5g_mimo_ul,
-                    "tx_power": nr5g_tx_power
-                }
+        # Return the parsed dictionary
+        return {
+            "timestamp": str(datetime.now()),
+            "net_param": {
+                "net_type": "5G",
+                "rsrp": nr5g_rsrp,
+                "rsrq": nr5g_rsrq,
+                "sinr": nr5g_sinr,
+                "band": nr5g_band,
+                "bandwidth_dl": nr5g_bw_dl,
+                "bandwidth_ul": nr5g_bw_ul,
+                "rssi_0": nr5g_rssi[0],
+                "rssi_1": nr5g_rssi[1],
+                "rssi_2": nr5g_rssi[2],
+                "rssi_3": nr5g_rssi[3],
+                "cell_id": nr5g_cell_id,
+                "gNB": gNodeB_ID,
+                "sector_ID": sector_ID,
+                "mimo_dl": nr5g_mimo_dl,
+                "mimo_ul": nr5g_mimo_ul,
+                "tx_power": nr5g_tx_power
             }
+        }
 
     @staticmethod
     def safe_float_conversion(value):

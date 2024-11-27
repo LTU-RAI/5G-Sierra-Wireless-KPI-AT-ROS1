@@ -9,7 +9,7 @@ find_package(rosidl_default_generators REQUIRED)
 
 # Add custom message files
 rosidl_generate_interfaces(${PROJECT_NAME}
-  "msg/at_sierra_nr5g.msg"
+  "msg/ATSierraNR5G.msg"
   DEPENDENCIES std_msgs
 )
 
@@ -19,9 +19,5 @@ install(PROGRAMS
   DESTINATION lib/${PROJECT_NAME}
 )
 
-# Install launch and config files (if any)
-install(DIRECTORY launch config
-  DESTINATION share/${PROJECT_NAME}
-)
-
+ament_export_dependencies(rosidl_default_runtime)
 ament_package()
