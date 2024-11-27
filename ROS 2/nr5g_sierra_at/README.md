@@ -1,12 +1,12 @@
-# 5G Sierra Wireless KPI AT ROS1
+# 5G Sierra Wireless KPI AT ROS2
 
  Author: [Emanuele Pagliari](https://github.com/Palia95)
 
- This ROS1 package gathers the main 5G RF quality indexes from Sierra Wireless 5G modems (`EM9293` and `EM9191`) and publish them in the proper ROS1 topic (`sierra_nr5g`).
+ This ROS2 package gathers the main 5G RF quality indexes from Sierra Wireless 5G modems (`EM9293` and `EM9191`) and publish them in the proper ROS2 topic (`sierra_nr5g`).
 
 ## Requirements
 
- The only requirements are Python3 with its related ROS1 dependencies and `pySerial` installed. Also, a Sierra Wireless 5G modem properly connected to the host computer is needed with a good quality USB-C 3.0 cable.
+ The only requirements are Python3 with its related ROS2 dependencies and `pySerial` installed. Also, a Sierra Wireless 5G modem properly connected to the host computer is needed with a good quality USB-C 3.0 cable.
 
 ## Forcing Sierra Wireless driver loading
 
